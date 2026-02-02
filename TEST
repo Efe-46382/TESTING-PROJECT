@@ -1,0 +1,143 @@
+-- Server Script: The World's Genie
+
+local Players = game:GetService("Players")
+
+local Lighting = game:GetService("Lighting")
+
+
+
+-- Configuration
+
+local GENIE_COLOR = Color3.fromRGB(255, 85, 0) -- Bright Orange
+
+local TRIGGER_PLAYER_NAME = "RobloxPlayer31is" -- Put your name here to be the only "Master"
+
+
+
+-- Function to create the Genie for a player
+
+local function createServerGenie(player)
+
+	local character = player.Character or player.CharacterAdded:Wait()
+
+	local root = character:WaitForChild("HumanoidRootPart")
+
+
+
+	-- Create the Genie Model (Visible to all)
+
+	local genie = Instance.new("Part")
+
+	genie.Name = player.Name .. "s_Genie"
+
+	genie.Size = Vector3.new(2, 2, 2)
+
+	genie.Shape = Enum.PartType.Ball
+
+	genie.Material = Enum.Material.Neon
+
+	genie.Color = GENIE_COLOR
+
+	genie.CanCollide = false
+
+	genie.Anchored = true
+
+	genie.Parent = workspace
+
+
+
+	-- Give it a glowing particle effect
+
+	local attachment = Instance.new("Attachment", genie)
+
+	local particles = Instance.new("ParticleEmitter", attachment)
+
+	particles.Rate = 20
+
+	particles.Speed = NumberRange.new(1, 3)
+
+
+
+	-- Floating Logic (Server-side)
+
+	task.spawn(function()
+
+		local t = 0
+
+		while genie.Parent and character.Parent do
+
+			t = t + 0.1
+
+			local offset = Vector3.new(3, 3 + math.sin(t), 2)
+
+			genie.CFrame = root.CFrame * CFrame.new(offset)
+
+			task.wait(0.05)
+
+		end
+
+		genie:Destroy()
+
+	end)
+
+
+
+	-- The Wish Listener
+
+	player.Chatted:Connect(function(message)
+
+		local msg = message:lower()
+
+		local humanoid = character:FindFirstChild("Humanoid")
+
+
+
+		if msg == "!wish speed" then
+
+			humanoid.WalkSpeed = 100
+
+		elseif msg == "!wish fire" then
+
+			local f = Instance.new("Fire", root)
+
+			task.wait(10)
+
+			f:Destroy()
+
+		elseif msg == "!wish night" then
+
+			Lighting.ClockTime = 0
+
+		elseif msg == "!wish day" then
+
+			Lighting.ClockTime = 14
+
+		elseif msg == "!wish kill" then
+
+			-- Be careful with this one!
+
+			humanoid.Health = 0
+
+		end
+
+	end)
+
+end
+
+
+
+-- Watch for the specific player to join
+
+Players.PlayerAdded:Connect(function(player)
+
+	if player.Name == TRIGGER_PLAYER_NAME then
+
+		player.CharacterAdded:Connect(function()
+
+			createServerGenie(player)
+
+		end)
+
+	end
+
+end)
